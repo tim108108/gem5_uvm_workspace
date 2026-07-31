@@ -1,0 +1,40 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.elf
+*.hex
+*.dump
+*.map
+*.mk
+*.d
+
+# Python
+__pycache__/
+*.pyc
+
+# Core dump
+core.*
+
+# Results / generated
+m5out/
+sim/traces/
+sim/obj_dir*/
+sim/obj/
+sim/Vtb_top*
+sim/dump.vcd
+
+# Prototypes / unused
+sim/dpi_bridge.cpp
+src/dpi/src/dpi_bridge.cpp
+src/dpi/src/gem5_trace_generator.cc
+src/dpi/src/gem5_wrapper.cpp
+src/dpi/src/generate_golden_trace.py
+src/dpi/src/test_dpi.c
+src/dpi/src/test_dpi2.c
+src/dpi/src/test_dpi3.c
+sw/custom_tests/se_config.py
+
+# Third-party (managed as submodules)
+third_party/
+src/rtl/vendor/picorv32/
