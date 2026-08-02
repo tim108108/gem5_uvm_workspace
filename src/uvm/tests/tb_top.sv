@@ -4,6 +4,8 @@ module tb_top;
     import uvm_pkg::*;
     `include "uvm_macros.svh"
 
+    event uvm_diff_done;
+
     reg clk = 0;
     reg resetn = 0;
     wire trap;
@@ -108,7 +110,7 @@ module tb_top;
 
     picorv32_sram #(
         .DEPTH(8192),
-        .INIT_FILE("sw/custom_tests/test_add.hex")
+        .INIT_FILE("")
     ) sram (
         .clk(clk),
         .mem_valid(mem_valid),

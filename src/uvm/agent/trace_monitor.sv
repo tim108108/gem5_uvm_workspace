@@ -25,8 +25,8 @@ class trace_monitor extends uvm_monitor;
                 txn.reg_write_en = |vif.gen_reg_addr;
                 txn.reg_addr     = vif.gen_reg_addr;
                 txn.reg_data     = vif.gen_reg_data;
-                `uvm_info("MONITOR", $sformatf("Commit: PC=0x%0h Reg[%0d]=0x%0h",
-                    txn.pc, txn.reg_addr, txn.reg_data), UVM_HIGH)
+                `uvm_info("MONITOR", $sformatf("Commit: PC=0x%0h Reg[%0d]=0x%0h @ %0t",
+                    txn.pc, txn.reg_addr, txn.reg_data, $time), UVM_LOW)
                 mon_ap.write(txn);
             end
         end

@@ -4,6 +4,9 @@
 #endif
 #include "Vtb_top.h"
 #include "Vtb_top___024root.h"
+#ifdef UVM_VIF
+#include "Vtb_top__Syms.h"
+#endif
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -125,6 +128,9 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < 10; i++) {
         r->tb_top__DOT__clk = !r->tb_top__DOT__clk;
+#ifdef UVM_VIF
+        r->vlSymsp->TOP__tb_top__DOT__vif.clk = r->tb_top__DOT__clk;
+#endif
         top->eval();
         main_time++;
 #if VM_TRACE_VCD
@@ -135,6 +141,9 @@ int main(int argc, char** argv) {
 
     while (!Verilated::gotFinish() && main_time < 50000) {
         r->tb_top__DOT__clk = !r->tb_top__DOT__clk;
+#ifdef UVM_VIF
+        r->vlSymsp->TOP__tb_top__DOT__vif.clk = r->tb_top__DOT__clk;
+#endif
         top->eval();
         main_time++;
 #if VM_TRACE_VCD
