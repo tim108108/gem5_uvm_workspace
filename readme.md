@@ -35,7 +35,7 @@ PicoRV32 (RTL DUT) 與 gem5 (golden model) 的鎖步比較驗證平台。
        │                                          sim/traces/test_mem.trace
        │                                           (binary golden reference)
        │
-       └──► Verilator 5.032 ──► sim/tb_top_diff.sv
+       └──► Verilator 5.050 ──► sim/tb_top_diff.sv
             ┌───────────────────┐
             │ PicoRV32 DUT     │── rvfi_valid ──┐
             │ (RV32IMC)        │── rvfi_rd_addr  │
@@ -91,7 +91,9 @@ PicoRV32 (RTL DUT) 與 gem5 (golden model) 的鎖步比較驗證平台。
 │       └── *.hex / .elf / .dump / .map  (編譯產物)
 │
 └── third_party/
-    └── gem5/                   # gem5 v25.1.0.1 (git submodule)
+    ├── gem5/                   # gem5 v25.1.0.1 (git submodule)
+    ├── verilator/              # Verilator 5.050 (git submodule, 自建至 install/)
+    └── uvm-verilator/          # chipsalliance UVM library (git submodule)
 ```
 
 ---
@@ -252,7 +254,7 @@ make TEST_NAME=test_xxx NUM_INSTS=??? diff
 |------|------|------|
 | OS | Ubuntu 26.04 | x86_64, 無 swap |
 | GCC | 15.2.0 | 宿主編譯器 |
-| Verilator | 5.032 | RTL 模擬器 |
+| Verilator | 5.050 | RTL 模擬器 (git submodule, 自建: `cd third_party/verilator && autoconf && ./configure --prefix=$PWD/install && make -j4 && make install`) |
 | gem5 | v25.1.0.1 | `scons build/RISCV/gem5.opt -j1` |
 | RISC-V GCC | riscv64-unknown-elf | `-march=rv32imc -mabi=ilp32` |
 
@@ -296,7 +298,7 @@ picorv32 #(
 
 ## 已知限制
 
-1. **UVM 不相容**: Verilator 5.032 + chipsalliance/uvm-verilator 觸發 `REFDTYPE` 內部錯誤 (`uvm_phase_hopper.svh:57`)。目前使用輕量 DPI-C 框架取代 UVM。
+1. **UVM 相容性**: 舊版 Verilator 5.032 + chipsalliance/uvm-verilator 會觸發 `REFDTYPE` 內部錯誤 (`uvm_phase_hopper.svh:57`)。目前已改用 **Verilator 5.050** (submodule) 支援 `make uvm-run`，但 UVM 測試平台仍屬進行中。
 
 2. **Trace 相依性**: `Makefile` 的 `$(TRACE_FILE)` 相依於 `gem5.opt`, `config.py`, `.elf`，但**不包含** `generate_trace.py` 本身。修改腳本後需手動 `rm -f sim/traces/*.trace`。
 

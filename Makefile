@@ -2,6 +2,13 @@ GEM5_DIR   := third_party/gem5
 GEM5_BUILD := $(GEM5_DIR)/build/RISCV/gem5.opt
 CPU_CONFIG := src/dpi/src/se_trace_config.py
 
+# Verilator 5.050 (git submodule, built from source into install/)
+VERILATOR  ?= $(abspath third_party/verilator/install/bin/verilator)
+
+# UVM library (chipsalliance/uvm-verilator submodule)
+UVM_DIR    := third_party/uvm-verilator
+UVM_SRC    := $(UVM_DIR)/src/uvm_pkg.sv
+
 PICORV32_DIR := src/rtl/vendor/picorv32
 SRAM_DIR     := src/rtl/adapter
 PKG_DIR      := src/uvm/packages
@@ -31,7 +38,7 @@ ifeq ($(VCD),1)
 VLT_FLAGS += --trace
 endif
 
-.PHONY: all clean distclean sw trace rtl diff
+.PHONY: all clean distclean sw trace rtl diff uvm uvm-run
 
 all: sw trace rtl
 
@@ -66,7 +73,7 @@ $(SIM_DIR)/Vtb_top: $(SIM_DIR)/tb_top_diff.sv \
   $(PKG_DIR)/dpi_bridge_pkg.sv \
   $(SIM_DIR)/sim_main.cpp
 	cd $(SIM_DIR) && rm -rf obj_dir_diff && \
-	verilator $(VLT_FLAGS) \
+	$(VERILATOR) $(VLT_FLAGS) \
 	  --Mdir obj_dir_diff \
 	  --exe sim_main.cpp \
 	  ../$(PKG_DIR)/dpi_bridge_pkg.sv \
@@ -76,9 +83,46 @@ $(SIM_DIR)/Vtb_top: $(SIM_DIR)/tb_top_diff.sv \
 	make -C obj_dir_diff -f Vtb_top.mk -j4
 
 # --- Run simulation ---
-diff: rtl
+diff: rtl trace
 	cd $(SIM_DIR) && VCD=$(VCD) TRACE_PATH=$(abspath $(TRACE_FILE)) \
 	  HEX_PATH=$(abspath $(TARGET_HEX)) ./obj_dir_diff/Vtb_top
+
+# --- Build UVM testbench ---
+UVM_TOP    := src/uvm/tests/tb_top.sv
+UVM_FILES  := $(PKG_DIR)/dpi_bridge_pkg.sv \
+              src/uvm/agent/trace_transaction.sv \
+              src/uvm/agent/trace_monitor.sv \
+              src/uvm/env/uvm_gem5_scoreboard.sv \
+              src/uvm/env/uvm_gem5_env.sv \
+              src/uvm/tests/test_hello.sv \
+              src/rtl/adapter/cpu_trace_adapter_if.sv \
+              $(UVM_TOP)
+
+uvm: $(SIM_DIR)/Vtb_top_uvm
+
+UVM_VLT_FLAGS := --vpi
+
+$(SIM_DIR)/Vtb_top_uvm: $(UVM_FILES) \
+  $(PICORV32_DIR)/picorv32.v \
+  $(SRAM_DIR)/picorv32_sram.sv \
+  $(SIM_DIR)/sim_main.cpp
+	cd $(SIM_DIR) && rm -rf obj_dir_uvm && \
+	$(VERILATOR) $(VLT_FLAGS) $(UVM_VLT_FLAGS) \
+	  -I../$(UVM_DIR)/src \
+	  -CFLAGS -I../$(UVM_DIR)/src/dpi \
+	  -CFLAGS -DUVM_VIF \
+	  --Mdir obj_dir_uvm \
+	  --exe sim_main.cpp \
+	  ../$(UVM_SRC) \
+	  ../$(UVM_DIR)/src/dpi/uvm_dpi.cc \
+	  $(addprefix ../,$(UVM_FILES)) \
+	  ../$(PICORV32_DIR)/picorv32.v \
+	  ../$(SRAM_DIR)/picorv32_sram.sv && \
+	make -C obj_dir_uvm -f Vtb_top.mk -j4
+
+uvm-run: uvm trace
+	cd $(SIM_DIR) && VCD=$(VCD) TRACE_PATH=$(abspath $(TRACE_FILE)) \
+	  HEX_PATH=$(abspath $(TARGET_HEX)) ./obj_dir_uvm/Vtb_top
 
 # --- Clean ---
 clean:
